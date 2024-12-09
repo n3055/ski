@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Small Skill Swap</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            justify-content: center;
+            text-align: center;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .navbar {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 0;
+            position: fixed;
+            top: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .desktop {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            margin-top: 100px;
+            border-radius: 15px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            outline: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="text"]:focus, select:focus {
+            transform: scale(1.05);
+            box-shadow: 0 5px 10px rgba(255, 255, 255, 0.6);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            font-size: 16px;
+            color: #fff;
+            background: linear-gradient(90deg, #007BFF, #0056b3);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #0056b3, #003d80);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-container button {
+            flex: 1;
+        }
+
+        label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: left;
+            display: block;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .desktop {
+                padding: 20px;
+                margin-top: 120px;
+            }
+
+            .navbar h1 {
+                font-size: 22px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background-color: rgba(0, 0, 0,1); /* Temporary */
+        }
+        
+    </style>
+    <script src="{%static 'particles.js'%}"></script>
+</head>
+<body>
+    <div id="particles-js"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <h1>MICRO SKILL SWAP</h1>
+    </nav>
+
+    <!-- Main Section: Enter Name and Choose Action -->
+    <section class="desktop" id="desktop-main">
+        <input id="room-name-input" type="text" placeholder="Enter Your Name" required>
+        <div class="btn-container">
+            <button onclick="goToQuery()">GET HELP</button>
+            <button onclick="goToExpertise()">HELP</button>
+        </div>
+    </section>
+
+    <!-- Query Section -->
+    <section class="desktop hidden" id="desktop-query">
+        <label for="query">Search Your Query:</label>
+        <input type="text" id="query-input" placeholder="Enter Your Query...">
+        <label for="category">Choose a Category:</label>
+        <select id="category">
+            <option value="Python">Python</option>
+            <option value="ML">ML</option>
+            <option value="Web Development">Web Development</option>
+            <option value="App Development">App Development</option>
+            <option value="Java">Java</option>
+            <option value="C++">C++</option>
+        </select>
+        <button onclick="goToVideoChat()">Search</button>
+    </section>
+
+    <!-- Expertise Section -->
+    <section class="desktop hidden" id="desktop-expertise">
+        <label for="expertise">Choose Your Expertise:</label>
+        <select id="expertise">
+            <option value="Python">Python</option>
+            <option value="ML">ML</option>
+            <option value="Web Development">Web Development</option>
+            <option value="App Development">App Development</option>
+            <option value="Java">Java</option>
+        </select>
+        <button onclick="goToVideoChat()">Search</button>
+    </section>
+
+    <script>
+        particlesJS.load('particles-js', "{%static 'particlesjs-confi.json'%}", function() {
+            console.log('Particles.js loaded');
+        });
+
+        function goToQuery() {
+            toggleVisibility('desktop-main', 'desktop-query');
+        }
+
+        function goToExpertise() {
+            toggleVisibility('desktop-main', 'desktop-expertise');
+        }
+
+        function goToVideoChat() {
+            const roomName = document.getElementById('room-name-input').value;
+            if (roomName.trim()) {
+                window.location.pathname = `${roomName}/`;
+            } else {
+                alert('Please enter your name.');
+            }
+        }
+
+        function toggleVisibility(hideId, showId) {
+            document.getElementById(hideId).classList.add('hidden');
+            document.getElementById(showId).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

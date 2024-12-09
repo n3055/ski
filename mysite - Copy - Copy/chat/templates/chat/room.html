@@ -1,0 +1,418 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        #status {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: rgba(255,255,255,1);
+            padding: 1rem;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 20px;
+            text-align: center;
+        }
+
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: rgba(0,0,0,1);
+        }
+
+        header {
+            background-color: #222;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            font-size: 1.5rem;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 60px;
+            height: 60px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            background-color: #45a049;
+        }
+
+        /* Chat Modal */
+        .chat-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .chat-dialog {
+            width: 90%;
+            max-width: 400px;
+            background-color: #222;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #remoteCanvas #localCanvas{
+            display:flex;
+            flex-direction: column;
+            float: right;
+
+        }
+        #chat-log {
+            width: 90%;
+            height: 200px;
+            resize: none;
+            border: 2px solid #ccc;
+            padding: 10px;
+            background: #222;
+            font-size: 1rem;
+            color: white;
+            overflow-y: scroll;
+            margin-bottom: 1rem;
+        }
+       
+
+        #chat-message-input, #chat-message-submit {
+            width: 100%;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #chat-message-input {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width:380px;
+        }
+        #localVideo{
+            opacity: 0;
+        }
+        #tempCanvas{
+            opacity: 0;
+        }
+        #chat-message-submit {
+            padding: 0.5rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #chat-message-submit:hover {
+            background-color: #45a049;
+        }
+        .canvas-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 0.2rem 4rem;
+            gap: 40px;
+        }
+        .video-tab {
+            display: flex;
+            justify-content: space-around;
+            flex-direction: column;
+            margin: 1rem 4rem;
+            gap: 20px;
+        }
+        canvas {
+            border: 2px solid #ccc;
+            background-color: #222;
+        }
+
+        #drawingBoard {
+            margin: 1rem auto;
+            display: block;
+            border: 3px solid #000;
+        }
+        #muteVideoButton{
+            width: 75px;
+            height: 50px;
+        }
+        #muteAudioButton{
+            width: 75px;
+            height: 50px;
+        }
+        .mute{
+            display: flex;
+            gap:20px;
+            margin: 0 7rem;
+        }
+        .ad{
+            display: flex;
+            flex-direction: column;
+            gap:15px;
+        }
+        .canvas-tools{
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Chat-Room
+    </header>
+    <div id="status" class="finding">
+        Finding People...
+    </div>
+    
+
+    <div class="canvas-container">
+        <canvas id="drawingBoard" width="800" height="600"></canvas>
+        <div class="canvas-tools">
+            <button id="penBtn">✏️</button>
+            <button id="eraserBtn">⬜</button>
+            <button id="clearBtn">❌</button>
+        </div>
+        <div class="video-tab">
+        <canvas id="localCanvas" width="400" height="300"></canvas>
+        <div class="mute">
+        <button id="muteVideoButton"><svg focusable="false" width="24" height="24" viewBox="0 0 24 24" class="Hdh4hc cIGbvc NMm5M"><path d="M18 10.48V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4.48l4 3.98v-11l-4 3.98zm-2-.79V18H4V6h12v3.69z"></path></svg></button>
+        <button id="muteAudioButton"><svg focusable="false" width="24" height="24" viewBox="0 0 24 24" class="Hdh4hc cIGbvc NMm5M"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path></svg></button>
+        </div>
+        <canvas id="remoteCanvas" width="400" height="300"></canvas>
+        
+        </div>
+        <div class="ad">
+            <img src="{%static 'bg.jpg'%}">
+            <img src="{%static 'bg2.jpg'%}">
+            <img src="{%static 'bg3.jpg'%}">
+        </div>
+    </div>
+    <video id="localVideo" autoplay muted></video>
+    <canvas id="tempCanvas" width="400" height="300"></canvas>
+    <!-- Floating Action Button -->
+    <div class="fab" onclick="toggleChatModal()">💬</div>
+
+    <!-- Chat Modal -->
+    <div class="chat-modal" id="chatModal">
+        <div class="chat-dialog">
+            <textarea id="chat-log" readonly></textarea>
+            <input id="chat-message-input" type="text" placeholder="Type your message here...">
+            <input id="chat-message-submit" type="button" value="Send">
+            <button onclick="toggleChatModal()" style="width: 100%; padding: 0.5rem; background-color: #ccc; border: none; border-radius: 4px;">Close</button>
+        </div>
+    </div>
+
+    {{ room_name|json_script:"room-name" }}
+    {{user_name|json_script:"user-name"}}
+    <script>
+
+        // Change after 6 seconds
+        function toggleChatModal() {
+            const modal = document.getElementById('chatModal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+        const localVideo = document.getElementById('localVideo');
+        const localCanvas = document.getElementById('localCanvas');
+        const remoteCanvas = document.getElementById('remoteCanvas');
+        const tempCanvas = document.getElementById('tempCanvas');
+        const localCtx = localCanvas.getContext('2d');
+        const remoteCtx = remoteCanvas.getContext('2d');
+        const tempCtx = tempCanvas.getContext('2d');
+    
+
+        const muteVideoButton = document.getElementById('muteVideoButton');
+        const muteAudioButton = document.getElementById('muteAudioButton');
+        let localStream;
+        // Add your existing WebSocket and canvas JavaScript code here (unchanged)
+        // JavaScript code for chat, drawing, and video functionality goes here (unchanged from your original).
+    // Get the canvas element and context
+    const canvas = document.getElementById('drawingBoard');
+    const ctx = canvas.getContext('2d');
+
+    let drawing = false; // Track whether the user is drawing
+    let erasing = false;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    // Start drawing
+    function startDrawing(e) {
+        drawing = true;
+        ctx.beginPath();
+        ctx.moveTo(e.offsetX, e.offsetY);
+    }
+
+    // Stop drawing
+    function stopDrawing() {
+        drawing = false;
+        ctx.beginPath();
+    }
+
+    // Draw on the canvas and send coordinates
+    function draw(e) {
+        if (!drawing) return;
+
+        const mouseX = e.offsetX;
+        const mouseY = e.offsetY;
+
+        // Draw locally
+        
+
+        // Send coordinates to WebSocket
+        chatSocket.send(JSON.stringify({
+            type: 'draw',
+            X: mouseX,
+            Y: mouseY
+        }));
+    }
+
+    // Draw received points
+    function drawPoint(x, y) {
+        ctx.lineCap = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    // Add canvas event listeners
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('mousemove', draw);
+
+    const roomName = JSON.parse(document.getElementById('room-name').textContent);
+    const userName = JSON.parse(document.getElementById('user-name').textContent);
+    // WebSocket setup
+    const chatSocket = new WebSocket(
+        //'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+        'wss://' + '1d1f-203-201-63-37.ngrok-free.app' + '/ws/chat/' + roomName + '/'
+    );
+
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+
+        // Handle status updates
+        if (data.status) {
+            document.getElementById("status").innerText = data.status;
+        }
+
+        // Handle chat messages
+        if (data.message) {
+            document.querySelector('#chat-log').value += (data.user+": "+data.message + '\n');
+        }
+
+        // Handle drawing points
+        if (data.X !== undefined && data.Y !== undefined) {
+            drawPoint(data.X, data.Y);
+        }
+        if (data.type === 'video') {
+            const img = new Image();
+            img.src = data.frame;
+            img.onload = () => {
+                if (data.sender === 'local') {
+                    localCtx.clearRect(0, 0, localCanvas.width, localCanvas.height);
+                    localCtx.drawImage(img, 0, 0, localCanvas.width, localCanvas.height);
+                } else {
+                    remoteCtx.clearRect(0, 0, remoteCanvas.width, remoteCanvas.height);
+                    remoteCtx.drawImage(img, 0, 0, remoteCanvas.width, remoteCanvas.height);
+                }
+            };
+        }
+    };
+
+    chatSocket.onclose = function (e) {
+        document.getElementById("status").innerText = "Disconnected.";
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // Sending a chat message
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function (e) {
+        if (e.key === 'Enter') {
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function (e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value.trim();
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                type: 'message',
+                message: message,
+                user:userName
+            }));
+            messageInputDom.value = '';
+        }
+    };
+    
+    // Access webcam
+    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+        localVideo.srcObject = stream;
+        localStream = stream;
+        setInterval(() => {
+            tempCtx.drawImage(localVideo, 0, 0, tempCanvas.width, tempCanvas.height);
+            const frame = tempCanvas.toDataURL('image/jpeg');
+            chatSocket.send(JSON.stringify({ type: 'video', frame: frame, sender: 'local',user:userName }));
+        }, 100);
+    });
+    muteVideoButton.addEventListener('click', () => {
+        const videoTrack = localStream.getVideoTracks()[0];
+        const isMuted = videoTrack.enabled;
+        videoTrack.enabled = !isMuted; // Toggle the 'enabled' property
+        muteVideoButton.innerHTML = isMuted 
+        ? `<svg focusable="false" width="24" height="24" viewBox="0 0 24 24" class="Hdh4hc cIGbvc NMm5M">
+             <path d="M18 10.48V6c0-1.1-.9-2-2-2H6.83l2 2H16v7.17l2 2v-1.65l4 3.98v-11l-4 3.98zM16 16L6 6 4 4 2.81 2.81 1.39 4.22l.85.85C2.09 5.35 2 5.66 2 6v12c0 1.1.9 2 2 2h12c.34 0 .65-.09.93-.24l2.85 2.85 1.41-1.41L18 18l-2-2zM4 18V6.83L15.17 18H4z"></path>
+           </svg>` 
+        : `<svg focusable="false" width="24" height="24" viewBox="0 0 24 24" class="Hdh4hc cIGbvc NMm5M">
+             <path d="M18 10.48V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4.48l4 3.98v-11l-4 3.98zm-2-.79V18H4V6h12v3.69z"></path>
+           </svg>`;
+    });
+
+    // Function to mute/unmute audio
+    muteAudioButton.addEventListener('click', () => {
+        const audioTrack = localStream.getAudioTracks()[0];
+        const isMuted = !audioTrack.enabled;
+        audioTrack.enabled = !isMuted; // Toggle the 'enabled' property
+        muteAudioButton.innerHTML = isMuted
+        ? `<svg focusable="false" width="24" height="24" viewBox="0 0 24 24" class="Hdh4hc cIGbvc NMm5M"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="#000000" class="Hdh4hc cIGbvc"><path d="M0 0h24v24H0zm0 0h24v24H0z" fill="none"></path><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"></path></svg>`;  });
+    
+
+        document.getElementById('penBtn').addEventListener('click', () => {
+            erasing = false;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+        });
+        document.getElementById('eraserBtn').addEventListener('click', () => {
+            erasing = true;
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 30;
+        });
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+    </script>
+</body>
+</html>
+
